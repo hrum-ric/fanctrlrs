@@ -1,0 +1,13 @@
+[Unit]
+Description=Raspberry cpu temperature regulator through a fan that acts at a certain threshold
+After=network.target
+Wants=network.target
+
+[Service]
+ExecStart=/usr/local/bin/fanctrlrs -c /usr/local/etc/fanctrlrs.toml
+Restart=on-success
+RestartSec=200ms
+ExecReload=/bin/kill -HUP $MAINPID
+
+[Install]
+WantedBy=multi-user.target
