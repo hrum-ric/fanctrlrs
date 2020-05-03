@@ -1,0 +1,24 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"type": "cargo",
+			"subcommand": "build  --release",
+			"problemMatcher": [
+				"$rustc"
+			],
+			"group": "build",
+			"label": "Rust: cargo build - fanctrlrs"
+		},
+        {
+            "label": "cargo build --release",
+            "type": "process",
+            "command": "cargo",
+            "args": ["build", "--release"],
+            "problemMatcher": [
+                "$rustc"
+            ],
+            "group": "build"
+        }
+	]
+}

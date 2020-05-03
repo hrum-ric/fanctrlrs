@@ -9,7 +9,6 @@ use std::{
         Arc,
     },
     thread, time,
-	error::Error as StdError,
 };
 use structopt::StructOpt;
 
@@ -54,24 +53,6 @@ impl Temperature {
     }
 }
 
-#[cfg(feature = "notify")]
-impl TelegramConf {
-    const BASE_URL: &'static str = "https://api.telegram.org/bot";
-
-    fn send_message(&self, msg: &str) -> Result<(), Error> {
-        let params = [("chat_id", &(*self.chat_id)), ("text", msg)];
-        let res = reqwest::Client::new()
-            .post(format!("{}{}/sendMessage", TelegramConf::BASE_URL, self.token).as_str())
-            .form(&params)
-            .send();
-
-        if let Err(_) = res {
-            println!("Error sending telegram message.");
-        }
-        Ok(())
-    }
-}
-
 fn main() -> Result<(), Error> {
     let config = Config::load()?;
     let mut fan_pin = output_devices::DigitalOutputDevice::new(config.pin);
@@ -84,15 +65,6 @@ fn main() -> Result<(), Error> {
     signal_hook::flag::register(signal_hook::SIGTERM, Arc::clone(&shutdown))?;
     signal_hook::flag::register(signal_hook::SIGINT, Arc::clone(&shutdown))?;
 
-    #[cfg(feature = "notify")]
-    {
-        // Send message of strarting execution
-        config
-            .telegram
-            .as_ref()
-            .map_or(Ok(()), |ref t| t.send_message("fanctrlrs started."))?;
-    }
-
     while !shutdown.load(Ordering::Relaxed) {
         let contents = fs::read_to_string(&config.temperature.file)?;
 
@@ -101,16 +73,10 @@ fn main() -> Result<(), Error> {
         if config.temperature.switch_condition(&fan_pin, temperature) {
             fan_pin.toggle();
         }
+        //println!("temperature is {0} and fans is {1}", temperature, fan_pin.is_active());
 
         thread::sleep(time::Duration::from_secs(config.seconds));
     }
 
-    #[cfg(feature = "notify")]
-    {
-        config
-            .telegram
-            .as_ref()
-            .map_or(Ok(()), |ref t| t.send_message("fanctrlrs stopped."))?;
-    }
     Ok(())
 }
